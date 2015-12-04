@@ -71,8 +71,15 @@ RUN buildDeps=" \
 
 COPY docker-php-ext-* /usr/local/bin/
 
+# Install xdebug
+COPY xdebug.ini /tmp/
+RUN pecl install xdebug \
+  && docker-php-ext-enable xdebug \
+  && cat /tmp/xdebug.ini >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+  && rm -rf /tmp/xdebug.ini
+
 COPY apache2-foreground /usr/local/bin/
 WORKDIR /var/www/html
 
-EXPOSE 80
+EXPOSE 80 9000
 CMD ["apache2-foreground"]
