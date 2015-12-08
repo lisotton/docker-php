@@ -24,12 +24,6 @@ COPY apache2.conf /etc/apache2/apache2.conf
 ENV PHP_EXTRA_BUILD_DEPS apache2-prefork-dev
 ENV PHP_EXTRA_CONFIGURE_ARGS --with-apxs2=/usr/bin/apxs2
 
-ENV GPG_KEYS 0BD78B5F97500D450838F95DFE857D9A90D90EC1 6E4F6AB321FDC07F2C332E3AC2BF0BC433CFC8B3
-RUN set -xe \
-	&& for key in $GPG_KEYS; do \
-		gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key"; \
-	done
-
 ENV PHP_VERSION 5.6.7
 
 # --enable-mysqlnd is included below because it's harder to compile after the fact the extensions are (since it's a plugin for several extensions, not an extension in itself)
@@ -46,8 +40,6 @@ RUN buildDeps=" \
 	&& set -x \
 	&& apt-get update && apt-get install -y $buildDeps --no-install-recommends && rm -rf /var/lib/apt/lists/* \
 	&& curl -SL "http://php.net/get/php-$PHP_VERSION.tar.xz/from/this/mirror" -o php.tar.xz \
-	&& curl -SL "http://php.net/get/php-$PHP_VERSION.tar.xz.asc/from/this/mirror" -o php.tar.xz.asc \
-	&& gpg --verify php.tar.xz.asc \
 	&& mkdir -p /usr/src/php \
 	&& tar -xof php.tar.xz -C /usr/src/php --strip-components=1 \
 	&& rm php.tar.xz* \
@@ -73,12 +65,12 @@ COPY docker-php-ext-* /usr/local/bin/
 
 # Install xdebug
 COPY xdebug.ini /tmp/
-RUN pecl config-set php_ini /usr/local/etc/php/php.ini \
-  && touch /usr/local/etc/php/php.ini \
+RUN pecl config-set php_ini $PHP_INI_DIR/php.ini \
+  && touch $PHP_INI_DIR/php.ini \
   && pecl install xdebug \
   && docker-php-ext-enable xdebug \
-  && cat /tmp/xdebug.ini >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
-  && rm -rf /tmp/xdebug.ini /usr/local/etc/php/php.ini
+  && cat /tmp/xdebug.ini >> $PHP_INI_DIR/conf.d/docker-php-ext-xdebug.ini \
+  && rm -rf /tmp/xdebug.ini $PHP_INI_DIR/php.ini
 
 COPY apache2-foreground /usr/local/bin/
 WORKDIR /var/www/html
