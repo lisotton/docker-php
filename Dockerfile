@@ -73,10 +73,12 @@ COPY docker-php-ext-* /usr/local/bin/
 
 # Install xdebug
 COPY xdebug.ini /tmp/
-RUN pecl install xdebug \
+RUN pecl config-set php_ini /usr/local/etc/php/php.ini \
+  && touch /usr/local/etc/php/php.ini \
+  && pecl install xdebug \
   && docker-php-ext-enable xdebug \
   && cat /tmp/xdebug.ini >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
-  && rm -rf /tmp/xdebug.ini
+  && rm -rf /tmp/xdebug.ini /usr/local/etc/php/php.ini
 
 COPY apache2-foreground /usr/local/bin/
 WORKDIR /var/www/html
